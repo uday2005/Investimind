@@ -1,0 +1,10 @@
+#LangGraph
+langgraph
+
+
+python-dotenv
+langchain-groq
+
+
+# Utilities
+typing_extensions

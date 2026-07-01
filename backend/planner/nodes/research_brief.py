@@ -1,0 +1,25 @@
+from backend.state import InvestMindState
+from backend.llm import llm
+from backend.schemas.planner import ResearchBrief
+from backend.prompts.research_brief import RESEARCH_BRIEF_PROMPT
+from langchain_core.messages import SystemMessage
+
+def research_brief_node(state : InvestMindState):
+    
+    messages = state["messages"]
+    
+    structured_llm = llm.with_structured_output(
+        ResearchBrief
+    )
+
+    response = structured_llm.invoke(
+        [
+        SystemMessage(RESEARCH_BRIEF_PROMPT),
+        *messages #we are unpacking all the messages in history as otherwise it woudl have become the lsit of list which we don't want
+        ]
+    )
+    
+    # return response
+    return {
+    "research_brief": response.research_brief
+    }

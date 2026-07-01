@@ -1,7 +1,7 @@
 from backend.state import InvestMindState
 from backend.llm import llm
-from backend.schemas.planner import ResearchBrief
-from backend.prompts.research_brief import RESEARCH_BRIEF_PROMPT
+from backend.planner.schemas import ResearchBrief
+from backend.planner.prompts.research_brief import RESEARCH_BRIEF_PROMPT
 from langchain_core.messages import SystemMessage
 
 def research_brief_node(state : InvestMindState):

@@ -5,6 +5,7 @@ langgraph
 python-dotenv
 langchain-groq
 
+tavily
 
 # Utilities
 typing_extensions

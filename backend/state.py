@@ -27,5 +27,12 @@ class InvestMindState(MessagesState):
     # Final research brief produced by the planner
     research_brief: str | None = None
     
+    # Information on what to reseach on which is extarcted from reseach brief so we have to make queries form these information
+    required_information : list[str] = []
 
-# 
+    # Queries which will be searched on web
+    queries: list[str] = []
+    
+    # This is how web scarapping data will be come for now it is travily we will do normalize it later
+    
+    search_results: list[dict] = []

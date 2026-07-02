@@ -34,5 +34,25 @@ class InvestMindState(MessagesState):
     queries: list[str] = []
     
     # This is how web scarapping data will be come for now it is travily we will do normalize it later
-    
+    # Information retrival node
     search_results: list[dict] = []
+
+    
+    # Notes extracted from search results and used by the writer
+    # research_notes: list[str] = []
+    research_notes: Annotated[list[str], operator.add]
+    
+    # Number of research loops performed
+    research_iterations: int = 0
+    
+    # Coverage Checker Output
+
+    is_sufficient: bool | None = None
+
+    missing_information: list[str] = []
+
+    coverage_assessment: str | None = None
+
+    confidence: float | None = None
+    
+    

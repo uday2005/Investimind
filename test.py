@@ -1,138 +1,111 @@
 from pprint import pprint
 
+from langchain_core.messages import HumanMessage
+
 from backend.state import InvestMindState
 
-from backend.research.nodes.information_planner import (
-    information_planner_node,
-)
+from backend.planner.graph import planner_graph
+from backend.research.graph import research_graph
 
-from backend.research.nodes.query_generator import (
-    query_generator_node,
-)
-
-from backend.research.nodes.information_retrieval import (
-    information_retrieval_node,
-)
-
-from backend.research.nodes.note_extractor import (
-    note_extractor_node,
-)
-
-
-# ==========================================================
-# Initial State
-# ==========================================================
 
 state = InvestMindState(
-    research_brief="""
-Compare Apple's AI strategy with Microsoft's AI strategy.
+    messages=[
+        HumanMessage(
+            content="""
+Analyze Nvidia as a long-term investment.
 
 Focus on:
+- Business model
+- Revenue
+- Profitability
 - AI products
-- Investments
-- Partnerships
+- CUDA ecosystem
+- Competition
+- Customers
+- Data center business
+- Gaming business
+- Automotive business
+- Valuation
+- Risks
+- Opportunities
+- Capital allocation
 - Future roadmap
 """
+        )
+    ]
 )
 
-print("=" * 70)
+print("=" * 80)
 print("INITIAL STATE")
-print("=" * 70)
+print("=" * 80)
+
 pprint(state)
 
+# --------------------------------------------------------
+# Planner
+# --------------------------------------------------------
 
-# ==========================================================
-# Information Planner
-# ==========================================================
-
-planner_output = information_planner_node(state)
-state.update(planner_output)
+planner_output = planner_graph.invoke(state)
 
 print("\n")
-print("=" * 70)
-print("INFORMATION PLANNER OUTPUT")
-print("=" * 70)
+print("=" * 80)
+print("PLANNER OUTPUT")
+print("=" * 80)
+
 pprint(planner_output)
 
-print("\n")
-print("=" * 70)
-print("STATE AFTER INFORMATION PLANNER")
-print("=" * 70)
-pprint(state)
 
 
-# ==========================================================
-# Query Generator
-# ==========================================================
+# --------------------------------------------------------
+# Research
+# --------------------------------------------------------
 
-query_output = query_generator_node(state)
-state.update(query_output)
+research_output = research_graph.invoke(planner_output)
 
 print("\n")
-print("=" * 70)
-print("QUERY GENERATOR OUTPUT")
-print("=" * 70)
-pprint(query_output)
+print("=" * 80)
+print("RESEARCH OUTPUT")
+print("=" * 80)
+
+pprint(research_output)
 
 print("\n")
-print("=" * 70)
-print("STATE AFTER QUERY GENERATOR")
-print("=" * 70)
-pprint(state)
+print("=" * 80)
+print("FINAL RESEARCH BRIEF")
+print("=" * 80)
 
-
-# ==========================================================
-# Information Retrieval
-# ==========================================================
-
-retrieval_output = information_retrieval_node(state)
-state.update(retrieval_output)
+print(research_output["research_brief"])
 
 print("\n")
-print("=" * 70)
-print("INFORMATION RETRIEVAL OUTPUT")
-print("=" * 70)
-
-print(f"Queries Executed : {len(state['queries'])}")
-print(f"Search Responses : {len(state['search_results'])}")
-
-print("\nFirst Search Result Structure:")
-print("-" * 70)
-
-if state["search_results"]:
-    pprint(state["search_results"][0])
-else:
-    print("No search results returned.")
-
-
-# ==========================================================
-# Note Extractor
-# ==========================================================
-
-notes_output = note_extractor_node(state)
-state.update(notes_output)
-
-print("\n")
-print("=" * 70)
-print("NOTE EXTRACTOR OUTPUT")
-print("=" * 70)
-pprint(notes_output)
-
-print("\n")
-print("=" * 70)
+print("=" * 80)
 print("RESEARCH NOTES")
-print("=" * 70)
+print("=" * 80)
 
-for i, note in enumerate(state["research_notes"], start=1):
+for i, note in enumerate(research_output["research_notes"], 1):
     print(f"{i}. {note}")
 
+print("\n")
+print("=" * 80)
+print("COVERAGE")
+print("=" * 80)
 
-# ==========================================================
-# Final State
-# ==========================================================
+print("Sufficient :", research_output["is_sufficient"])
+print("Confidence :", research_output["confidence"])
+
+print("\nAssessment")
+print(research_output["coverage_assessment"])
+
+print("\nMissing Information")
+
+if research_output["missing_information"]:
+    for item in research_output["missing_information"]:
+        print("-", item)
+else:
+    print("None")
 
 print("\n")
-print("=" * 70)
-print("FINAL STATE")
-print("=" * 70)
-pprint(state)
+print("=" * 80)
+print("FOLLOW-UP ITERATIONS")
+print("=" * 80)
+
+print(research_output.get("research_iterations", 0))

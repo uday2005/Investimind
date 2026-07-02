@@ -5,9 +5,6 @@ from backend.planner.schemas import ClarifyWithUser
 from backend.planner.prompts.clarification import CLARIFICATION_SYSTEM_PROMPT
 from backend.llm import llm
 
-system_prompt = SystemMessage(
-    content=CLARIFICATION_SYSTEM_PROMPT
-)
 
 def clarification_node(state: InvestMindState):
     """
@@ -22,7 +19,8 @@ def clarification_node(state: InvestMindState):
     
     # we like a put a wrapper around llm so it give ouypt like our schemas
     structured_llm = llm.with_structured_output(
-        ClarifyWithUser
+        ClarifyWithUser,
+        
     )
     
     response = structured_llm.invoke(
@@ -34,9 +32,9 @@ def clarification_node(state: InvestMindState):
     
     # return response
     return {
-    "need_clarification": response.need_clarification
+        "need_clarification": response.need_clarification,
+        "clarification_question": response.clarification_question,
     }
-    
     
     
     

@@ -9,7 +9,7 @@ def research_brief_node(state : InvestMindState):
     messages = state["messages"]
     
     structured_llm = llm.with_structured_output(
-        ResearchBrief
+        ResearchBrief,
     )
 
     response = structured_llm.invoke(
@@ -21,5 +21,8 @@ def research_brief_node(state : InvestMindState):
     
     # return response
     return {
-    "research_brief": response.research_brief
-    }
+    "objective": response.objective,
+    "scope": response.scope,
+    "constraints": response.constraints,
+    "required_information": response.required_information
+}

@@ -24,8 +24,12 @@ class InvestMindState(MessagesState):
     # Question to ask the user if clarification is needed
     clarification_question: str | None = None
 
-    # Final research brief produced by the planner
-    research_brief: str | None = None
+    # # Final research brief produced by the planner
+    # research_brief: str | None = None
+    objective: str        # objective
+    scope: str
+    constraints: list[str]
+    required_information: list[str]
     
     # Information on what to reseach on which is extarcted from reseach brief so we have to make queries form these information
     required_information : list[str] = []

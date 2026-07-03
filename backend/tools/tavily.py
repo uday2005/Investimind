@@ -5,12 +5,10 @@ import os
 from tavily import TavilyClient
 
 
-client = TavilyClient()
+client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
-def tavily_search(query: str):
-
+def tavily_search(query: str) -> dict:
     return client.search(
-        api_key=os.getenv("TAVILY_API_KEY"),
         query=query,
         max_results=2,
         include_raw_content=False,

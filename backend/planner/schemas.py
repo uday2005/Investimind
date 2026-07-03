@@ -1,6 +1,8 @@
-from pydantic import BaseModel , Field
+from pydantic import BaseModel, ConfigDict, Field
 
 class ClarifyWithUser(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     need_clarification: bool = Field(
         description="Whether additional user input is required before research can begin."
     )
@@ -10,11 +12,10 @@ class ClarifyWithUser(BaseModel):
         description="A single concise question to resolve the ambiguity. Leave null when no clarification is needed."
     )
 
-    reasoning: str = Field(
-        description="Brief explanation for the decision. Used for debugging and evaluation."
-    )
 
 class ResearchBrief(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     objective: str = Field(
         description="One concise sentence describing the core research goal."
     )
@@ -22,8 +23,12 @@ class ResearchBrief(BaseModel):
         description="Defines the boundaries of the research including entities, industries, geography and time period."
     )
     constraints: list[str] = Field(
+        default_factory=list,
+        max_length=5,
         description="Hard requirements the Research Agent must follow. Maximum 5 concise items."
     )
     required_information: list[str] = Field(
+        min_length=1,
+        max_length=8,
         description="Specific evidence that must be collected. Each item should be independently searchable. Maximum 8 items."
     )

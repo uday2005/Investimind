@@ -1,6 +1,8 @@
 
 import operator
 from typing import Optional, Annotated, List, Sequence
+from backend.research.schemas import ResearchNote
+from backend.tools.normalizers import SearchResult
 
 
 # This is the inbuilt message state which store all the message running in graph during persistent memory like current memory
@@ -29,22 +31,26 @@ class InvestMindState(MessagesState):
     objective: str        # objective
     scope: str
     constraints: list[str]
-    required_information: list[str]
     
     # Information on what to reseach on which is extarcted from reseach brief so we have to make queries form these information
     required_information : list[str] = []
 
     # Queries which will be searched on web
     queries: list[str] = []
+
+    # Accumulated separately so follow-up rounds cannot repeat paid searches.
+    searched_queries: Annotated[list[str], operator.add]
     
     # This is how web scarapping data will be come for now it is travily we will do normalize it later
     # Information retrival node
-    search_results: list[dict] = []
+    # Normalized search results from the retriever (currently Tavily)
+    search_results: list[SearchResult] = []
 
     
     # Notes extracted from search results and used by the writer
     # research_notes: list[str] = []
-    research_notes: Annotated[list[str], operator.add]
+    # research_notes: Annotated[list[str], operator.add]
+    research_notes: Annotated[list[ResearchNote], operator.add]
     
     # Number of research loops performed
     research_iterations: int = 0
@@ -58,5 +64,5 @@ class InvestMindState(MessagesState):
     coverage_assessment: str | None = None
 
     confidence: float | None = None
-    
+
     

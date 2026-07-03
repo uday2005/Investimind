@@ -6,6 +6,11 @@ from backend.planner.prompts.clarification import CLARIFICATION_SYSTEM_PROMPT
 from backend.llm import llm
 
 
+DEFAULT_CLARIFICATION_QUESTION = (
+    "What specific question or decision would you like this research to address?"
+)
+
+
 def clarification_node(state: InvestMindState):
     """
     Determines whether the user's request contains enough
@@ -14,27 +19,27 @@ def clarification_node(state: InvestMindState):
     If more information is required, returns a clarification
     question for the user.
     """
-    
     messages = state["messages"]
-    
-    # we like a put a wrapper around llm so it give ouypt like our schemas
+
     structured_llm = llm.with_structured_output(
         ClarifyWithUser,
-        
     )
-    
+
     response = structured_llm.invoke(
         [
-            SystemMessage(content = CLARIFICATION_SYSTEM_PROMPT),
-            *messages
+            SystemMessage(content=CLARIFICATION_SYSTEM_PROMPT),
+            *messages,
         ]
     )
-    
-    # return response
+
+    if response.need_clarification:
+        clarification_question = (
+            response.clarification_question or ""
+        ).strip() or DEFAULT_CLARIFICATION_QUESTION
+    else:
+        clarification_question = None
+
     return {
         "need_clarification": response.need_clarification,
-        "clarification_question": response.clarification_question,
+        "clarification_question": clarification_question,
     }
-    
-    
-    

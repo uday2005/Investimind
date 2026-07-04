@@ -21,9 +21,13 @@ def test_investmind_graph_stops_when_planner_needs_clarification():
     def fake_research(_state):
         raise AssertionError("Research should not run when clarification is needed.")
 
+    def fake_writer(_state):
+        raise AssertionError("Writer should not run when clarification is needed.")
+
     graph = build_investmind_graph(
         planner=fake_planner,
         research=fake_research,
+        writer=fake_writer,
     )
 
     result = graph.invoke(
@@ -63,9 +67,14 @@ def test_investmind_graph_runs_research_after_clear_planner_output():
             "missing_information": [],
         }
 
+    def fake_writer(state):
+        assert state["is_sufficient"] is True
+        return {"pdf_path": "/tmp/investmind-report.pdf"}
+
     graph = build_investmind_graph(
         planner=fake_planner,
         research=fake_research,
+        writer=fake_writer,
     )
 
     result = graph.invoke(
@@ -84,3 +93,4 @@ def test_investmind_graph_runs_research_after_clear_planner_output():
         "AMD AI accelerator revenue last 3 years",
     ]
     assert result["is_sufficient"] is True
+    assert result["pdf_path"] == "/tmp/investmind-report.pdf"

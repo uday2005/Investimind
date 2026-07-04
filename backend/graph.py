@@ -3,6 +3,7 @@ from langgraph.graph import END, START, StateGraph
 from backend.planner.graph import planner_graph
 from backend.research.graph import research_graph
 from backend.state import InvestMindState
+from backend.writer.graph import writer_graph
 
 
 def should_run_research(state: InvestMindState):
@@ -12,11 +13,16 @@ def should_run_research(state: InvestMindState):
     return "research"
 
 
-def build_investmind_graph(planner=planner_graph, research=research_graph):
+def build_investmind_graph(
+    planner=planner_graph,
+    research=research_graph,
+    writer=writer_graph,
+):
     builder = StateGraph(InvestMindState)
 
     builder.add_node("planner", planner)
     builder.add_node("research", research)
+    builder.add_node("writer", writer)
 
     builder.add_edge(START, "planner")
     builder.add_conditional_edges(
@@ -27,7 +33,8 @@ def build_investmind_graph(planner=planner_graph, research=research_graph):
             "research": "research",
         },
     )
-    builder.add_edge("research", END)
+    builder.add_edge("research", "writer")
+    builder.add_edge("writer", END)
 
     return builder.compile()
 

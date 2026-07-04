@@ -3,7 +3,7 @@ from backend.state import InvestMindState
 from langchain_core.messages import SystemMessage
 from backend.planner.schemas import ClarifyWithUser
 from backend.planner.prompts.clarification import CLARIFICATION_SYSTEM_PROMPT
-from backend.llm import llm
+from backend.llm import clarification_llm as llm
 
 
 DEFAULT_CLARIFICATION_QUESTION = (

@@ -9,3 +9,4 @@ tavily
 
 # Utilities
 typing_extensions
+reportlab

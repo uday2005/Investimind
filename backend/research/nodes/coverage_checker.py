@@ -1,6 +1,6 @@
 from backend.research.schemas import CoverageCheck, RequiredInfoCoverage
 from backend.state import InvestMindState
-from backend.llm import llm
+from backend.llm import coverage_checker_llm as llm
 
 from langchain_core.messages import SystemMessage, HumanMessage
 

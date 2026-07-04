@@ -1,5 +1,5 @@
 from backend.state import InvestMindState
-from backend.llm import llm
+from backend.llm import research_brief_llm as llm
 from backend.planner.schemas import ResearchBrief
 from backend.planner.prompts.research_brief import RESEARCH_BRIEF_PROMPT
 from langchain_core.messages import SystemMessage

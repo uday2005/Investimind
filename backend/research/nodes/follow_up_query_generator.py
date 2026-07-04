@@ -1,6 +1,6 @@
 from backend.research.schemas import SearchQueries
 from backend.state import InvestMindState
-from backend.llm import llm
+from backend.llm import follow_up_query_generator_llm as llm
 from langchain_core.messages import SystemMessage, HumanMessage
 from backend.research.prompts.query_generator import FOLLOW_UP_QUERY_GENERATOR_PROMPT
 from backend.research.query_budget import (

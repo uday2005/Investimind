@@ -4,7 +4,7 @@ import time
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from backend.llm import llm
+from backend.llm import note_extractor_llm as llm
 from backend.research.prompts.note_extractor import NOTE_EXTRACTOR_PROMPT
 from backend.research.schemas import NoteExtractor, ResearchNote
 from backend.state import InvestMindState

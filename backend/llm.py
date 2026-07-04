@@ -30,7 +30,7 @@ query_generator_llm = build_groq_llm(SCOUT_MODEL)
 follow_up_query_generator_llm = build_groq_llm(SCOUT_MODEL)
 note_extractor_llm = build_groq_llm(SCOUT_MODEL)
 coverage_checker_llm = build_groq_llm(SCOUT_MODEL)
-evidence_curator_llm = build_groq_llm(SCOUT_MODEL)
+evidence_curator_llm = build_groq_llm(RELIABLE_MODEL)
 
 # Keep the 70B model only where bad structured output or weak reasoning is most
 # expensive for the product experience.

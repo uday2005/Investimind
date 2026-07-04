@@ -1,9 +1,51 @@
+import logging
+import time
+
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from backend.llm import report_writer_llm as llm
 from backend.state import InvestMindState
 from backend.writer.prompts.report_writer import REPORT_WRITER_PROMPT
 from backend.writer.schemas import EvidenceCuration, InvestmentReport
+
+logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 3
+INITIAL_BACKOFF = 2
+
+# Groq raises these when the model emits malformed tool-call JSON (e.g. writing
+# cited_note_ids as [N4, N5] instead of [4, 5]) or hits a rate limit. Both are
+# transient — the model is non-deterministic, so a retry usually succeeds.
+RETRYABLE_MARKERS = ("tool_use_failed", "429", "400")
+
+
+def _invoke_with_retry(structured_llm, messages):
+    """Invoke the structured LLM, retrying on transient tool-call / rate-limit
+    failures with exponential backoff."""
+    last_exc: Exception | None = None
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            return structured_llm.invoke(messages)
+        except Exception as exc:
+            last_exc = exc
+            if not any(marker in str(exc) for marker in RETRYABLE_MARKERS):
+                raise
+            if attempt == MAX_RETRIES - 1:
+                break
+            wait_time = INITIAL_BACKOFF ** attempt
+            logger.warning(
+                "Report writer generation failed (attempt %d/%d), retrying in "
+                "%.1fs: %s",
+                attempt + 1,
+                MAX_RETRIES,
+                wait_time,
+                str(exc)[:200],
+            )
+            time.sleep(wait_time)
+
+    # Exhausted retries — re-raise the last error so the caller sees it.
+    raise last_exc  # type: ignore[misc]
 
 
 def format_curated_evidence(
@@ -84,7 +126,8 @@ def report_writer_node(state: InvestMindState):
     )
     structured_llm = llm.with_structured_output(InvestmentReport)
 
-    response = structured_llm.invoke(
+    response = _invoke_with_retry(
+        structured_llm,
         [
             SystemMessage(content=REPORT_WRITER_PROMPT),
             HumanMessage(
@@ -108,7 +151,7 @@ Revision Feedback:
 {format_revision_feedback(citation_validation)}
 """
             ),
-        ]
+        ],
     )
 
     is_revision = citation_validation is not None and not citation_validation.is_valid

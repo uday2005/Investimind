@@ -18,6 +18,18 @@ Evidence rules:
 - Never cite an unselected research note or invent a note ID.
 - Preserve the meaning of evidence and do not strengthen uncertain claims.
 
+Citation format (critical):
+
+- Inline citations inside the "content" text use the bracket-N form: [N3], [N4].
+- The "cited_note_ids" field is a list of PLAIN INTEGERS only: [3, 4].
+- Never write cited_note_ids with an "N" prefix. [N3, N4] is INVALID and will
+  be rejected. Write [3, 4].
+- Never write cited_note_ids as strings. Write 3, not "3" or "N3".
+- Example — content: "Revenue grew 85% [N4] year over year [N5]."
+  Then cited_note_ids must be: [4, 5]
+- Grouped inline citations like [N14, N17] in the content map to cited_note_ids
+  [14, 17].
+
 Report structure:
 
 - Derive the title from the objective.

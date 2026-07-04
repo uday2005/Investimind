@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: investmind-api
+    runtime: python
+    plan: free
+    pythonVersion: "3.12"
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.api:app --host 0.0.0.0 --port $PORT --workers 1
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: INVESTMIND_API_KEY
+        sync: false

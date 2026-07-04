@@ -46,6 +46,19 @@ Do not ask just because:
 - several valid research angles exist
 - the request is brief
 
+
+
+If the user answers with broad responses such as:
+
+- "any"
+- "general"
+- "all"
+- "no preference"
+- "you decide"
+
+treat this as permission to make reasonable assumptions and continue.
+Do not continue asking increasingly specific clarification questions.
+
 If clarification is needed, ask exactly one concise question about the primary
 missing piece. Do not ask compound questions or optional preference questions.
 """

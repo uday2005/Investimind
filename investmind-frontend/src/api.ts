@@ -1,4 +1,12 @@
 const BASE = import.meta.env.VITE_INVESTMIND_API_URL as string;
+const API_KEY = import.meta.env.VITE_INVESTMIND_API_KEY as string;
+
+// Sent on every request. The backend requires `Authorization: Bearer <key>`,
+// so without this every call comes back 401 unauthorized.
+const authHeaders: Record<string, string> = {
+  "Content-Type": "application/json",
+  ...(API_KEY ? { Authorization: `Bearer ${API_KEY}` } : {}),
+};
 
 export type RunReportResult =
   | { ok: false; error: string }
@@ -75,7 +83,7 @@ export async function startResearch(prompt: string): Promise<RunReportResult> {
   try {
     const res = await fetch(`${BASE}/research`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ prompt }),
     });
     return await parseResponse(res);
@@ -88,7 +96,7 @@ export async function answerClarification(session_id: string, answer: string): P
   try {
     const res = await fetch(`${BASE}/research/${encodeURIComponent(session_id)}/clarify`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ answer }),
     });
     return await parseResponse(res);

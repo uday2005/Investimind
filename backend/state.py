@@ -125,5 +125,6 @@ class InvestMindState(MessagesState):
     # One bounded writer retry is allowed after citation validation fails.
     report_revision_count: int = 0
 
-    pdf_path: str | None = None
+    pdf_base64: str | None = None
+    pdf_filename: str | None = None
     pdf_error: str | None = None

@@ -15,9 +15,8 @@ Endpoints:
 
 from __future__ import annotations
 
-import base64
+import logging
 import os
-from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -30,28 +29,36 @@ from pydantic import BaseModel
 # ADAPT #1 — import your compiled graph.
 from backend.graph import investmind_graph  # change if the export name differs
 
+# Structured report type so we can turn it into markdown for the frontend.
+from backend.writer.schemas import InvestmentReport
+
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 API_KEY = os.environ.get("INVESTMIND_API_KEY")
+if not API_KEY:
+    # Loud warning: with no key set, the endpoints are UNAUTHENTICATED and any
+    # caller can burn Groq + Tavily credits. Always set this on a deployed host.
+    logger.warning(
+        "INVESTMIND_API_KEY is not set — /research is OPEN and unauthenticated. "
+        "Set it in the environment before deploying."
+    )
 
 app = FastAPI(title="InvestMind API")
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:8080",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
-    ],
-    allow_credentials=True,
+    # For the demo this is open. Tighten to your Vercel origin before sharing,
+    # e.g. allow_origins=["https://investmind-frontend.vercel.app"].
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # In-memory session store. Fine for v1; swap for Redis/DB if you need
-# multi-worker or restart persistence.
+# multi-worker or restart persistence. Deploy with a SINGLE worker.
 SESSIONS: dict[str, dict[str, Any]] = {}
 
 
@@ -69,24 +76,40 @@ def _auth(authorization: str | None) -> None:
 
 
 def _invoke(messages: list[BaseMessage]) -> dict[str, Any]:
-    """Run the graph with a message history. ADAPT #2 if your state key
+    """Run the graph with a message history. ADAPT if your state key
     isn't `messages` — check backend/state.py."""
     return investmind_graph.invoke({"messages": messages})
+
+
+def _report_to_markdown(report: InvestmentReport) -> str:
+    """Flatten the structured InvestmentReport into markdown for display.
+
+    Inline [N#] citation markers in the content are preserved as-is.
+    """
+    parts: list[str] = [f"# {report.title}", ""]
+
+    parts.append("## Executive Summary")
+    parts.append(report.executive_summary.content)
+    parts.append("")
+
+    for section in report.sections:
+        parts.append(f"## {section.heading}")
+        parts.append(section.analysis.content)
+        parts.append("")
+
+    if report.evidence_limitations:
+        parts.append("## Evidence Limitations")
+        parts.extend(f"- {item}" for item in report.evidence_limitations)
+        parts.append("")
+
+    return "\n".join(parts).strip()
 
 
 def _pack_response(session_id: str, state: dict[str, Any]) -> dict[str, Any]:
     """Turn a final graph state into the frontend response shape and
     keep the in-memory session in sync."""
-    needs = bool(
-        state.get("need_clarification")
-        or state.get("needs_clarification")
-        or state.get("requires_clarification")
-    )
-    question = (
-        state.get("clarification_question")
-        or state.get("clarifying_question")
-        or state.get("planner_question")
-    )
+    needs = bool(state.get("need_clarification"))
+    question = state.get("clarification_question")
 
     if needs and question:
         # Append the assistant question to the stored history so the next
@@ -98,19 +121,19 @@ def _pack_response(session_id: str, state: dict[str, Any]) -> dict[str, Any]:
             "clarification_question": question,
         }
 
-    report_md = (
-        state.get("investment_report")
-        or state.get("report_markdown")
-        or state.get("final_report")
-        or ""
-    )
-    pdf_b64: str | None = None
-    pdf_name = "investmind-report.pdf"
-    pdf_path_str = state.get("pdf_path") or state.get("report_pdf_path")
-    if pdf_path_str and Path(pdf_path_str).exists():
-        p = Path(pdf_path_str)
-        pdf_b64 = base64.b64encode(p.read_bytes()).decode("ascii")
-        pdf_name = p.name
+    # investment_report is a structured InvestmentReport (or a dumped dict),
+    # never a plain string — serialize it to markdown for the frontend.
+    report_obj = state.get("investment_report")
+    if isinstance(report_obj, InvestmentReport):
+        report_md = _report_to_markdown(report_obj)
+    elif isinstance(report_obj, dict):
+        report_md = _report_to_markdown(InvestmentReport(**report_obj))
+    else:
+        report_md = report_obj or ""
+
+    # PDF now comes back as base64 straight from the graph state — no disk read.
+    pdf_b64 = state.get("pdf_base64")
+    pdf_name = state.get("pdf_filename") or "investmind-report.pdf"
 
     # Report is done — free the session.
     SESSIONS.pop(session_id, None)
@@ -120,6 +143,7 @@ def _pack_response(session_id: str, state: dict[str, Any]) -> dict[str, Any]:
         "report_markdown": report_md,
         "pdf_base64": pdf_b64,
         "pdf_filename": pdf_name,
+        "pdf_error": state.get("pdf_error"),
     }
 
 

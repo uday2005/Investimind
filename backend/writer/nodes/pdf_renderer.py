@@ -1,17 +1,16 @@
+import base64
 import hashlib
+import io
 import logging
 import re
 from datetime import date
 from html import escape
-from pathlib import Path
 
 from backend.state import InvestMindState
 
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_PDF_OUTPUT_DIR = PROJECT_ROOT / "output" / "pdf"
 CITATION_PATTERN = re.compile(r"\[N(\d+)\]")
 
 
@@ -47,12 +46,15 @@ def cited_note_ids(report) -> list[int]:
     return sorted(note_ids)
 
 
-def render_investment_report_pdf(
+def render_investment_report_pdf_bytes(
     report,
     research_notes,
-    *,
-    output_dir: Path | None = None,
-) -> Path:
+) -> tuple[str, bytes]:
+    """Render the investment report to PDF bytes in memory.
+
+    Returns (filename, pdf_bytes). Nothing is written to disk -- the bytes are
+    handed straight back so only the user's browser saves a copy.
+    """
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
     from reportlab.lib.pagesizes import A4
@@ -66,9 +68,8 @@ def render_investment_report_pdf(
         Spacer,
     )
 
-    output_dir = output_dir or DEFAULT_PDF_OUTPUT_DIR
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / report_filename(report)
+    filename = report_filename(report)
+    buffer = io.BytesIO()
     notes_by_id = {
         note_id: note
         for note_id, note in enumerate(research_notes, start=1)
@@ -153,7 +154,7 @@ def render_investment_report_pdf(
     )
 
     doc = SimpleDocTemplate(
-        str(output_path),
+        buffer,
         pagesize=A4,
         rightMargin=20 * mm,
         leftMargin=20 * mm,
@@ -254,17 +255,25 @@ def render_investment_report_pdf(
         canvas.restoreState()
 
     doc.build(story, onFirstPage=draw_page, onLaterPages=draw_page)
-    return output_path
+    return filename, buffer.getvalue()
 
 
 def pdf_renderer_node(state: InvestMindState):
     try:
-        output_path = render_investment_report_pdf(
+        filename, pdf_bytes = render_investment_report_pdf_bytes(
             state["investment_report"],
             state["research_notes"],
         )
     except Exception as exc:
         logger.exception("Failed to render investment report PDF")
-        return {"pdf_path": None, "pdf_error": str(exc)}
+        return {
+            "pdf_base64": None,
+            "pdf_filename": None,
+            "pdf_error": str(exc),
+        }
 
-    return {"pdf_path": str(output_path), "pdf_error": None}
+    return {
+        "pdf_base64": base64.b64encode(pdf_bytes).decode("ascii"),
+        "pdf_filename": filename,
+        "pdf_error": None,
+    }
